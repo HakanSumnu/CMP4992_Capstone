@@ -2,7 +2,8 @@ import numpy as np
 import csv
 import math
 
-directionVector = np.array([0, 0, -1])
+directionVector = np.array([0, 0, -1]) #Before I change my mathematical formulation, this vector's z componet had to be -1. Now, it does not matter whether it is -1 or 1. 
+                                       #The only thing that matter is that this vector should be a unit vector and all of its components must be zero except it z component.
 
 with open("data/test.csv") as file:
     file = csv.reader(file)
@@ -27,9 +28,9 @@ B2 = np.array([np.dot(X, Z), np.sum(Z)])
 x2 = np.linalg.solve(A, B2)
 print(f"Equation of z: {x2}")
 
-parallelVectorToLineInYZ = np.array([0, x1[0], x2[0]])
-parallelVectorToLineInYZ /= np.linalg.norm(parallelVectorToLineInYZ)
-angle = math.acos(np.dot(parallelVectorToLineInYZ, directionVector))
+parallelVectorToLineClamppedToYZ = np.array([0, x1[0], x2[0]])
+parallelVectorToLineClamppedToYZ /= np.linalg.norm(parallelVectorToLineClamppedToYZ)
+angle = math.acos(np.dot(parallelVectorToLineClamppedToYZ, directionVector))
 
 if angle >= math.pi - angle:
     angle = math.pi - angle
@@ -39,11 +40,20 @@ if (x1[0] > 0) != (x2[0] > 0):
 
 print(f"Angle: {angle}")
 
-newCoordinates = np.empty((X.shape[0], 3))
+#newCoordinates = np.empty((X.shape[0], 3))
+#
+#for i in range(X.shape[0]):
+#    newCoordinates[i, 0] = X[i]
+#    newCoordinates[i, 1] = math.cos(angle) * Y[i] - math.sin(angle) * Z[i]
+#    newCoordinates[i, 2] = math.sin(angle) * Y[i] + math.cos(angle) * Z[i]
+#
+#print(newCoordinates)
 
-for i in range(X.shape[0]):
-    newCoordinates[i, 0] = X[i]
-    newCoordinates[i, 1] = math.cos(angle) * Y[i] - math.sin(angle) * Z[i]
-    newCoordinates[i, 2] = math.sin(angle) * Y[i] + math.cos(angle) * Z[i]
+#parallelVectorToLineIn2D = np.array([1, math.cos(angle) * x1[0] - math.sin(angle) * x2[0], math.sin(angle) * x1[0] + math.cos(angle) * x2[0]])
+#print(f"A vector that is parallel to the rotated line: {parallelVectorToLineIn2D}")
+#
+#constantForComponents = np.array([0, math.cos(angle) * x1[1] - math.sin(angle) * x2[1], math.sin(angle) * x1[1] + math.cos(angle) * x2[1]])
+#print(f"Constants for components after the rotation: {constantForComponents}")
 
-print(newCoordinates)
+coefficientsOfNewLine = np.array([math.sin(angle) * x1[0] + math.cos(angle) * x2[0], math.sin(angle) * x1[1] + math.cos(angle) * x2[1]])
+print(f"Coefficients of the new line: {coefficientsOfNewLine}")
