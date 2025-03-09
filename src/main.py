@@ -5,6 +5,8 @@ import math
 DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 10.0 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
                                                  # some point whose z component is negative. Therefore, every point in the coordinate system should be shifted this amount in Z axis 
                                                  # to locate robot's initial point to origin (0, 0).
+ROBOT_DIAMETER: float = 5.0
+BALL_DIAMETER: float = 5.0
 directionVector: np.ndarray = np.array([0, 0, -1]) # Before I change my mathematical formulation, this vector's z componet had to be -1. Now, it does not matter whether it is -1 or 1. 
                                        # The only thing that matter is that this vector should be a unit vector and all of its components must be zero except it z component.
 
@@ -63,5 +65,10 @@ print(f"Angle: {angle}")
 #print(f"Constants for components after the rotation: {constantForComponents}")
 
 # Rotating the best fit line and considering it in XZ coordinate system
-coefficientsOfNewLine: np.ndarray = np.array([math.sin(angle) * x1[0] + math.cos(angle) * x2[0], math.sin(angle) * x1[1] + math.cos(angle) * x2[1]])
+coefficientsOfNewLine: np.ndarray = np.array([math.sin(angle) * x1[0] + math.cos(angle) * x2[0], math.sin(angle) * x1[1] + math.cos(angle) * x2[1] + DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA])
 print(f"Coefficients of the new line: {coefficientsOfNewLine}")
+
+# Finding two points whose distances to best fit line are equal to the sum of diameters of both robot and the ball.
+point1: float = ((ROBOT_DIAMETER + BALL_DIAMETER) * math.sqrt(coefficientsOfNewLine[0] * coefficientsOfNewLine[0] + 1.0) + coefficientsOfNewLine[1]) / -coefficientsOfNewLine[0]
+point2: float = ((ROBOT_DIAMETER + BALL_DIAMETER) * math.sqrt(coefficientsOfNewLine[0] * coefficientsOfNewLine[0] + 1.0) - coefficientsOfNewLine[1]) / coefficientsOfNewLine[0]
+print(f"Point 1: {point1}, Point 2: {point2}")
