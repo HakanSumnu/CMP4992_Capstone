@@ -11,7 +11,7 @@ directionVector: np.ndarray = np.array([0, 0, -1]) # Before I change my mathemat
                                        # The only thing that matter is that this vector should be a unit vector and all of its components must be zero except it z component.
 
 # Opening test file and collecting XYZ compenets of the dots and storing these components in separate arrays.
-with open("data/test.csv") as file:
+with open("data/locations.csv") as file:
     file = csv.reader(file)
     X = []
     Y = []
