@@ -5,10 +5,12 @@ import math
 RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 24
 RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 * (9 / 16) / 24
 
+directionVector = np.array([0, 0, -1])
+
 if __name__ == "__main__":
     screenShotCounter = 0
     #camera = cv2.VideoCapture(0)
-    camera = cv2.VideoCapture("data/videos/green_ball_movement_slow.mp4")
+    camera = cv2.VideoCapture("data/videos/green_ball_high_light_straight_path.mp4")
     kernel = np.empty((7, 7), dtype=np.uint8)
     cv2.circle(kernel, (3, 3), 3, 255, -1)
     kernel2 = 255 - kernel
@@ -56,7 +58,7 @@ if __name__ == "__main__":
                     else:
                         horizontalAngle = math.atan(horizontalAngle * RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE)
                         verticalAngle = math.atan(verticalAngle * RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE)
-                    locationVector = np.array([0, 0, -1])
+                    locationVector = directionVector.copy()
                     locationVector = np.array([
                         locationVector[0] * math.cos(-horizontalAngle) + locationVector[2] * math.sin(-horizontalAngle),
                         locationVector[1],
