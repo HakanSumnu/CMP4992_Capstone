@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import sys
+import time
 
 #RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 24
 #RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 * (9 / 16) / 24
@@ -165,13 +166,21 @@ if __name__ == "__main__":
 
     locations = []
 
+    start = time.time()
+
     while True:
         ret, frame = camera.read()
         if ret == False:
             break
+
         frame, ballPosition2d, location = detectBall(frame=frame)
+
         if ballPosition2d:
             locations.append(location)
+            start = time.time()
+
+        if (time.time() - start > 1.0):
+            locations.clear()
 
         if len(locations) > 20:
             locations.pop(0)
