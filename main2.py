@@ -182,37 +182,47 @@ def show_path_popup():
     print("Popup triggered")
     popup = Toplevel()
     popup.title("Trajectory Viewer")
-    popup.geometry("700x500")
-    fig, ax = plt.subplots()
+    popup.geometry("800x500")
+
+    fig, ax = plt.subplots(figsize=(4, 2))
     ax.set_title("Previous Ball Paths")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Z")
-    def plot_previous_paths():
-        for idx, path in enumerate(path_history):
-            if len(path) >= 3:
-                path = np.array(path)
-                x_vals = path[:, 0]
-                z_vals = path[:, 2]
-                coeffs = np.polyfit(x_vals, z_vals, 2)
-                x_fit = np.linspace(x_vals.min(), x_vals.max(), 100)
-                z_fit = np.polyval(coeffs, x_fit)
-                ax.plot(x_fit, z_fit, color=path_colors[idx % len(path_colors)], label=f"Past Path {idx+1}")
-        ax.legend()
-        canvas.draw()
+    ax.set_xlabel("X (cm)")
+    ax.set_ylabel("Z (cm)")
+    
+
+
+    # Automatically plot all previous paths on popup
+    for idx, path in enumerate(path_history):
+        if len(path) >= 3:
+            path = np.array(path)
+            x_vals = path[:, 0]
+            z_vals = -path[:, 2]
+            z_vals = -z_vals
+            coeffs = np.polyfit(x_vals, z_vals, 2)
+            x_fit = np.linspace(x_vals.min(), x_vals.max(), 100)
+            z_fit = -np.polyval(coeffs, x_fit)
+            ax.plot(x_fit, z_fit, color=path_colors[idx % len(path_colors)], label=f"Path {idx+1}")
+
+    ax.legend(loc='upper right')  # Inside corner
     canvas = FigureCanvasTkAgg(fig, master=popup)
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-    btn = tk.Button(popup, text="Show Previous Paths", command=plot_previous_paths)
-    btn.pack(side=tk.RIGHT, padx=10, pady=10)
+    canvas.draw()
 
 if __name__ == "__main__":
     camera = cv2.VideoCapture(0)
+
     root = tk.Tk()
-    root.title("Trajectory Control Panel")
-    button = tk.Button(root, text="Show Past Trajectories", command=show_path_popup)
+    root.withdraw()  # 🧹 Hides the default tk window completely
+
+    control_panel = Toplevel()
+    control_panel.title("Trajectory Control Panel")
+    control_panel.geometry("+1200+100")
+
+    button = tk.Button(control_panel, text="Show Past Trajectories", command=show_path_popup)
     button.pack()
+
     locations = []
     start = time.time()
-
     trajectory_pixels = []
 
     while True:
@@ -227,7 +237,7 @@ if __name__ == "__main__":
         if ballPosition2d:
             trajectory_pixels.append(ballPosition2d)  # 🟥 store pixel center
             locations.append(location)
-            current_path.append(location) 
+            current_path.append(location)
             start = time.time()
 
         if (time.time() - start > 1.0):
