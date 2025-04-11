@@ -4,13 +4,16 @@ import math
 import sys
 import time
 
-#RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 24
-#RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 * (9 / 16) / 24
-RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 32 / 43
-RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 32 / 43 * (3 / 4)
+#RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 24 #For Hakan's phone cam
+#RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 * (9 / 16) / 24 #For Hakan's phone cam
+#RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 32 / 43 #For Hakan's computer cam
+#RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 32 / 43 * (3 / 4) #For Hakan's computer cam
+RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 #For Zeynep's computer cam
+RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 * (2214 / 3420) #For Zeynep's computer cam
 #DIAMETER_OF_BALL_IN_PIXEL_AT_CERTAIN_DISTANCE = 212 * 30 #In here 212 is the diameter in pixel and 30 cm is the distance of the camera from the ball.
-#RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = math.pi * 106 * 106 / (960 * 540) #In photo taken from 30cm distance and with phone.
-RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with computer cam.
+#RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = math.pi * 106 * 106 / (960 * 540) #In photo taken from 30cm distance and with Hakan's phone.
+#RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with Hakan's computer cam.
+RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 460 * 460) / (3420 * 2214) #In photo taken from 50cm distance with Zeynep's computer cam.
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
