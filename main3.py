@@ -320,14 +320,14 @@ if __name__ == "__main__":
             
             predictedLineUIPoint1 = [100, 100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], 100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
             predictedLineUIPoint2 = [-100, -100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], -100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
-            predictedLineUIPoint1[0] /= predictedLineUIPoint1[2]
-            predictedLineUIPoint1[1] /= predictedLineUIPoint1[2]
-            predictedLineUIPoint1[2] = 1
+            predictedLineUIPoint1[0] /= -predictedLineUIPoint1[2]
+            predictedLineUIPoint1[1] /= -predictedLineUIPoint1[2]
+            predictedLineUIPoint1[2] = -1
 
             predictedLineUIPoint1[0] /= RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE
             predictedLineUIPoint1[1] /= RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE
 
-            predictedLineUIPoint1[0] *= -1
+            predictedLineUIPoint1[1] *= -1
 
             predictedLineUIPoint1[0] += 0.5
             predictedLineUIPoint1[1] += 0.5
@@ -335,14 +335,14 @@ if __name__ == "__main__":
             predictedLineUIPoint1[0] *= frame.shape[1]
             predictedLineUIPoint1[1] *= frame.shape[0]
 
-            predictedLineUIPoint2[0] /= predictedLineUIPoint2[2]
-            predictedLineUIPoint2[1] /= predictedLineUIPoint2[2]
-            predictedLineUIPoint2[2] = 1
+            predictedLineUIPoint2[0] /= -predictedLineUIPoint2[2]
+            predictedLineUIPoint2[1] /= -predictedLineUIPoint2[2]
+            predictedLineUIPoint2[2] = -1
 
             predictedLineUIPoint2[0] /= RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE
             predictedLineUIPoint2[1] /= RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE
 
-            predictedLineUIPoint2[0] *= -1
+            predictedLineUIPoint2[1] *= -1
 
             predictedLineUIPoint2[0] += 0.5
             predictedLineUIPoint2[1] += 0.5
