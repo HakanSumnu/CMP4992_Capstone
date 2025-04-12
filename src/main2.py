@@ -38,6 +38,9 @@ path_history = []
 current_path = []
 path_colors = ["red", "blue", "green", "purple", "orange", "cyan"]
 
+def clamp(number, min, max):
+    return (number < min) * min + (number > max) * max + (number >= min and number <= max) * number
+
 class KalmanFilter:
     def __init__(self):
         self.kf = cv2.KalmanFilter(4, 2)
@@ -150,11 +153,11 @@ def findPath(locations):
     A: np.ndarray = np.array([[np.dot(X, X), np.sum(X)], [np.sum(X), X.shape[0]]])
     B1: np.ndarray = np.array([np.dot(X, Y), np.sum(Y)])
     x1: np.ndarray = np.linalg.solve(A, B1)
-    #print(f"Equation of y: {x1}")
+    print(f"Equation of y: {x1}")
 
     B2: np.ndarray = np.array([np.dot(X, Z), np.sum(Z)])
     x2: np.ndarray = np.linalg.solve(A, B2)
-    #print(f"Equation of z: {x2}")
+    print(f"Equation of z: {x2}")
 
     # Calculating the angle between XZ plane at y = 0 and YZ components of the vector that is parallel to best fit line.
     parallelVectorToLineClamppedToYZ: np.ndarray = np.array([0, x1[0], x2[0]])
@@ -304,12 +307,14 @@ if __name__ == "__main__":
         if len(locations) > 20:
             locations.pop(0)
             coefficientsOfLine3D, coefficientsOfLine2D, boundries = findPath(locations=locations)
-            numberOfPassesPerRegion[int((-coefficientsOfLine2D[1] / coefficientsOfLine2D[0] + LEFT_BOUNDARY) / ((RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS))] += 1
+            numberOfPassesPerRegion[clamp(int((-coefficientsOfLine2D[1] / coefficientsOfLine2D[0] + LEFT_BOUNDARY) / ((RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS)),0 , NUMBER_OF_REGIONS - 1)] += 1
             amountOfMovementRequired = findEvasionPoint(boundries, numberOfPassesPerRegion, robotCurrentPosition)
             #predictedLineUIPoint1 = (int(((1e-4 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0]) / 1e-4), int(((1e-4 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1]) / 1e-4))
             #predictedLineUIPoint2 = (int(((1e+4 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0]) / 1e+4), int(((1e+4 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1]) / 1e+4))
-            predictedLineUIPoint1 = [10000, coefficientsOfLine3D[0][0] * 10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * 10000 + coefficientsOfLine3D[1][1]]
-            predictedLineUIPoint2 = [-10000, coefficientsOfLine3D[0][0] * -10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * -10000 + coefficientsOfLine3D[1][1]]
+            #predictedLineUIPoint1 = [10000, coefficientsOfLine3D[0][0] * 10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * 10000 + coefficientsOfLine3D[1][1]]
+            #predictedLineUIPoint2 = [-10000, coefficientsOfLine3D[0][0] * -10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * -10000 + coefficientsOfLine3D[1][1]]
+            predictedLineUIPoint1 = [(1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (1 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], 1]
+            predictedLineUIPoint2 = [(100 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (100 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], 100]
 
             predictedLineUIPoint1[0] = predictedLineUIPoint1[0] / (RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Left of the screen is -0.5 and right of the screen is 0.5
             predictedLineUIPoint1[1] = predictedLineUIPoint1[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
@@ -321,7 +326,7 @@ if __name__ == "__main__":
             predictedLineUIPoint2[1] = predictedLineUIPoint2[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint2[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
             predictedLineUIPoint2[0] += 0.5 #Left of the screen is 0.0 and right of the screen is 1.0
             predictedLineUIPoint2[1] += 0.5 #Bottom of the screen is 0.0 and top of the screen is 1.0
-            predictedLineUIPoint2[1] *= -1 #BottoTopm of the screen is 0.0 and bottom of the screen is 1.0
+            predictedLineUIPoint2[1] *= -1 #Top of the screen is 0.0 and bottom of the screen is 1.0
 
             #To find in pixel
             predictedLineUIPoint1[0] = int(predictedLineUIPoint1[0] * frame.shape[1])
