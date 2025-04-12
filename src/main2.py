@@ -71,7 +71,7 @@ class KalmanFilter:
 def detectBall(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lowerYellow = np.array([45, 46, 25])
+    lowerYellow = np.array([45, 76, 25])
     upperYellow = np.array([75, 179, 255])
     mask = cv2.inRange(hsv, lowerYellow, upperYellow)
 
