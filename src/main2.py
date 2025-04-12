@@ -10,14 +10,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 #RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 24 #For Hakan's phone cam
 #RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 * (9 / 16) / 24 #For Hakan's phone cam
-RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 32 / 43 #For Hakan's computer cam
-RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 32 / 43 * (3 / 4) #For Hakan's computer cam
-#RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 #For Zeynep's computer cam
-#RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 * (2214 / 3420) #For Zeynep's computer cam
+#RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 32 / 43 #For Hakan's computer cam
+#RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 32 / 43 * (3 / 4) #For Hakan's computer cam
+RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 #For Zeynep's computer cam
+RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 29.5 / 22 * (2214 / 3420) #For Zeynep's computer cam
 #DIAMETER_OF_BALL_IN_PIXEL_AT_CERTAIN_DISTANCE = 212 * 30 #In here 212 is the diameter in pixel and 30 cm is the distance of the camera from the ball.
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = math.pi * 106 * 106 / (960 * 540) #In photo taken from 30cm distance and with Hakan's phone.
-RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with Hakan's computer cam.
-#RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 230 * 230) / (3420 * 2214) #In photo taken from 50cm distance with Zeynep's computer cam.
+#RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with Hakan's computer cam.
+RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 230 * 230) / (3420 * 2214) #In photo taken from 50cm distance with Zeynep's computer cam.
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
@@ -71,7 +71,7 @@ class KalmanFilter:
 def detectBall(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lowerYellow = np.array([45, 76, 25])
+    lowerYellow = np.array([45, 46, 25])
     upperYellow = np.array([75, 179, 255])
     mask = cv2.inRange(hsv, lowerYellow, upperYellow)
 
@@ -153,11 +153,11 @@ def findPath(locations):
     A: np.ndarray = np.array([[np.dot(X, X), np.sum(X)], [np.sum(X), X.shape[0]]])
     B1: np.ndarray = np.array([np.dot(X, Y), np.sum(Y)])
     x1: np.ndarray = np.linalg.solve(A, B1)
-    print(f"Equation of y: {x1}")
+    #print(f"Equation of y: {x1}")
 
     B2: np.ndarray = np.array([np.dot(X, Z), np.sum(Z)])
     x2: np.ndarray = np.linalg.solve(A, B2)
-    print(f"Equation of z: {x2}")
+    #print(f"Equation of z: {x2}")
 
     # Calculating the angle between XZ plane at y = 0 and YZ components of the vector that is parallel to best fit line.
     parallelVectorToLineClamppedToYZ: np.ndarray = np.array([0, x1[0], x2[0]])
@@ -180,7 +180,7 @@ def findPath(locations):
     # Finding two points whose distances to best fit line are equal to the sum of diameters of both robot and the ball.
     point1: float = ((ROBOT_RADIUS + BALL_RADIUS) * math.sqrt(coefficientsOfNewLine[0] * coefficientsOfNewLine[0] + 1.0) + coefficientsOfNewLine[1]) / -coefficientsOfNewLine[0]
     point2: float = ((ROBOT_RADIUS + BALL_RADIUS) * math.sqrt(coefficientsOfNewLine[0] * coefficientsOfNewLine[0] + 1.0) - coefficientsOfNewLine[1]) / coefficientsOfNewLine[0]
-    #print(f"Point 1: {point1}, Point 2: {point2}")
+    print(f"Point 1: {point1}, Point 2: {point2}")
     return (x1, x2), coefficientsOfNewLine, (point1, point2)
 
 def findEvasionPoint(points, numberOfPassesPerRegion, robotCurrentPosition):
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         root.update()
         if not ret:
             break
-        #frame = cv2.flip(frame, 1)
+        frame = cv2.flip(frame, 1)
         frame, ballPosition2d, location = detectBall(frame)
 
         if ballPosition2d:
@@ -313,37 +313,71 @@ if __name__ == "__main__":
             #predictedLineUIPoint2 = (int(((1e+4 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0]) / 1e+4), int(((1e+4 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1]) / 1e+4))
             #predictedLineUIPoint1 = [10000, coefficientsOfLine3D[0][0] * 10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * 10000 + coefficientsOfLine3D[1][1]]
             #predictedLineUIPoint2 = [-10000, coefficientsOfLine3D[0][0] * -10000 + coefficientsOfLine3D[0][1], coefficientsOfLine3D[1][0] * -10000 + coefficientsOfLine3D[1][1]]
-            predictedLineUIPoint1 = [(1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (1 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], 1]
-            predictedLineUIPoint2 = [(100 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (100 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], 100]
+            #predictedLineUIPoint1 = [(-1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-1 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], -1]
+            #predictedLineUIPoint2 = [(-100 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-100 - coefficientsOfLine3D[1][1]) * (coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0]) + coefficientsOfLine3D[0][1], -100]
 
-            predictedLineUIPoint1[0] = predictedLineUIPoint1[0] / (RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Left of the screen is -0.5 and right of the screen is 0.5
-            predictedLineUIPoint1[1] = predictedLineUIPoint1[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
-            predictedLineUIPoint1[0] += 0.5 #Left of the screen is 0.0 and right of the screen is 1.0
-            predictedLineUIPoint1[1] += 0.5 #Bottom of the screen is 0.0 and top of the screen is 1.0
-            predictedLineUIPoint1[1] *= -1 #BottoTopm of the screen is 0.0 and bottom of the screen is 1.0
+            #predictedLineUIPoint1[0] = predictedLineUIPoint1[0] / (RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Left of the screen is -0.5 and right of the screen is 0.5
+            #predictedLineUIPoint1[1] = predictedLineUIPoint1[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint1[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
+            #predictedLineUIPoint1[0] += 0.5 #Left of the screen is 0.0 and right of the screen is 1.0
+            #predictedLineUIPoint1[1] += 0.5 #Bottom of the screen is 0.0 and top of the screen is 1.0
+            #predictedLineUIPoint1[1] *= -1 #BottoTopm of the screen is 0.0 and bottom of the screen is 1.0
 
-            predictedLineUIPoint2[0] = predictedLineUIPoint2[0] / (RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint2[2]) #Left of the screen is -0.5 and right of the screen is 0.5
-            predictedLineUIPoint2[1] = predictedLineUIPoint2[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint2[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
-            predictedLineUIPoint2[0] += 0.5 #Left of the screen is 0.0 and right of the screen is 1.0
-            predictedLineUIPoint2[1] += 0.5 #Bottom of the screen is 0.0 and top of the screen is 1.0
-            predictedLineUIPoint2[1] *= -1 #Top of the screen is 0.0 and bottom of the screen is 1.0
+            #predictedLineUIPoint2[0] = predictedLineUIPoint2[0] / (RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint2[2]) #Left of the screen is -0.5 and right of the screen is 0.5
+            #predictedLineUIPoint2[1] = predictedLineUIPoint2[1] / (RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE * predictedLineUIPoint2[2]) #Bottom of the screen is -0.5 and top of the screen is 0.5
+            #predictedLineUIPoint2[0] += 0.5 #Left of the screen is 0.0 and right of the screen is 1.0
+            #predictedLineUIPoint2[1] += 0.5 #Bottom of the screen is 0.0 and top of the screen is 1.0
+            #predictedLineUIPoint2[1] *= -1 #Top of the screen is 0.0 and bottom of the screen is 1.0
 
-            #To find in pixel
-            predictedLineUIPoint1[0] = int(predictedLineUIPoint1[0] * frame.shape[1])
-            predictedLineUIPoint1[1] = int(predictedLineUIPoint1[1] * frame.shape[0])
+            ##To find in pixel
+            #predictedLineUIPoint1[0] = int(predictedLineUIPoint1[0] * frame.shape[1])
+            #predictedLineUIPoint1[1] = int(predictedLineUIPoint1[1] * frame.shape[0])
 
-            predictedLineUIPoint2[0] = int(predictedLineUIPoint2[0] * frame.shape[1])
-            predictedLineUIPoint2[1] = int(predictedLineUIPoint2[1] * frame.shape[0])
+            #predictedLineUIPoint2[0] = int(predictedLineUIPoint2[0] * frame.shape[1])
+            #predictedLineUIPoint2[1] = int(predictedLineUIPoint2[1] * frame.shape[0])
 
-            print(f"pt1: {predictedLineUIPoint1}, pt2: {predictedLineUIPoint2}")
+            #predictedLineUIPoint1 = [locations[0][0], locations[0][0] * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], locations[0][0] * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+            #predictedLineUIPoint2 = [locations[len(locations) - 1][0], locations[len(locations) - 1][0] * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], locations[len(locations) - 1][0] * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+            predictedLineUIPoint1 = [100, 100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], 100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+            predictedLineUIPoint2 = [-100, -100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], -100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+            predictedLineUIPoint1[0] /= predictedLineUIPoint1[2]
+            predictedLineUIPoint1[1] /= predictedLineUIPoint1[2]
+            predictedLineUIPoint1[2] = 1
+
+            predictedLineUIPoint1[0] /= RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE
+            predictedLineUIPoint1[1] /= RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE
+
+            predictedLineUIPoint1[0] *= -1
+
+            predictedLineUIPoint1[0] += 0.5
+            predictedLineUIPoint1[1] += 0.5
+
+            predictedLineUIPoint1[0] *= frame.shape[1]
+            predictedLineUIPoint1[1] *= frame.shape[0]
+
+            predictedLineUIPoint2[0] /= predictedLineUIPoint2[2]
+            predictedLineUIPoint2[1] /= predictedLineUIPoint2[2]
+            predictedLineUIPoint2[2] = 1
+
+            predictedLineUIPoint2[0] /= RATIO_OF_WIDTH_AND_PERPENDICULAR_DISTANCE
+            predictedLineUIPoint2[1] /= RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE
+
+            predictedLineUIPoint2[0] *= -1
+
+            predictedLineUIPoint2[0] += 0.5
+            predictedLineUIPoint2[1] += 0.5
+
+            predictedLineUIPoint2[0] *= frame.shape[1]
+            predictedLineUIPoint2[1] *= frame.shape[0]
+
+            #print(f"pt1: {predictedLineUIPoint1}, pt2: {predictedLineUIPoint2}")
 
             cv2.line(frame, \
-                     (predictedLineUIPoint1[0], predictedLineUIPoint1[1]), \
-                     (predictedLineUIPoint2[0], predictedLineUIPoint2[1]), \
+                     (int(predictedLineUIPoint1[0]), int(predictedLineUIPoint1[1])), \
+                     (int(predictedLineUIPoint2[0]), int(predictedLineUIPoint2[1])), \
                      color=(0, 0, 0), \
                         thickness=5)
             sys.stdout.write("\033[K")  # Clear the entire line
-            #print(f"Location: {location}, coefficients of line 3D {coefficientsOfLine3D}, coefficients of line 2D: {coefficientsOfLine2D}, boundries: {boundries} amount of movement required: {amountOfMovementRequired} pt1: {predictedLineUIPoint1}, pt2: {predictedLineUIPoint2}")
+            print(f"Location: {location}, coefficients of line 3D {coefficientsOfLine3D}, coefficients of line 2D: {coefficientsOfLine2D}, boundries: {boundries} amount of movement required: {amountOfMovementRequired} pt1: {predictedLineUIPoint1}, pt2: {predictedLineUIPoint2}")
             sys.stdout.write("\033[F")  # Move cursor up one line
             sys.stdout.flush()
 
