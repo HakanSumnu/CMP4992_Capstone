@@ -15,9 +15,9 @@ class HSVRangeAdjuster:
         if len(self.v_history) > self.buffer_size:
             self.v_history.pop(0)
 
-    def get_hsv_bounds(self, base_hue_range=(20, 40), s_range=(100, 255), v_padding=40):
+    def get_hsv_bounds(self, base_hue_range=(35, 85), s_range=(100, 255), v_padding=40):
         if not self.v_history:
-            return (20, 100, 100), (40, 255, 255)
+            return (35, 100, 100), (85, 255, 255)
 
         avg_v = np.mean(self.v_history)
         lower_v = max(0, avg_v - v_padding)
