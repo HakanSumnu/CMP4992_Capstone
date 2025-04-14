@@ -72,8 +72,8 @@ def detectBall(frame):
     blurredFrame = cv2.GaussianBlur(frame, (5,5), 0)
     hsv = cv2.cvtColor(blurredFrame, cv2.COLOR_BGR2HSV)
 
-    lowerGreen = np.array([45, 96, 25])
-    upperGreen = np.array([75, 199, 255])
+    lowerGreen = np.array([45, 76, 25])
+    upperGreen = np.array([75, 179, 255])
     mask = cv2.inRange(hsv, lowerGreen, upperGreen)
 
     kernel = np.ones((5, 5), np.uint8)
