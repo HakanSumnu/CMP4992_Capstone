@@ -20,7 +20,7 @@ RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 0.966244 * (9 / 16) #For Hakan's we
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = math.pi * 106 * 106 / (960 * 540) #In photo taken from 30cm distance and with Hakan's phone.
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with Hakan's computer cam.
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 230 * 230) / (3420 * 2214) #In photo taken from 50cm distance with Zeynep's computer cam.
-RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 186 * 186) / (1920 * 1080) #In photo taken from 50cm distance with Hakan's web cam.
+RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 178 * 178) / (1920 * 1080) #In photo taken from 50cm distance with Hakan's web cam.
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
@@ -74,14 +74,17 @@ class KalmanFilter:
 def detectBall(frame):
     blurredFrame = cv2.GaussianBlur(frame, (5,5), 0)
     hsv = cv2.cvtColor(blurredFrame, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+    #v = cv2.equalizeHist(v)
+    hsv = cv2.merge((h, s, v))
 
     lowerGreen = np.array([45, 56, 25])
     upperGreen = np.array([75, 199, 255])
     mask = cv2.inRange(hsv, lowerGreen, upperGreen)
 
     kernel = np.ones((5, 5), np.uint8)
-    #mask = cv2.dilate(mask, kernel, iterations=1)
     #mask = cv2.erode(mask, kernel, iterations=1)
+    #mask = cv2.dilate(mask, kernel, iterations=1)
 
     cv2.imshow("Mask", mask)
 
@@ -98,7 +101,7 @@ def detectBall(frame):
             circle_area = np.pi * radius ** 2
             circularity = area / circle_area if circle_area > 0 else 0
 
-            if circularity > 0.7:
+            if circularity > 0.6:
                 center = (int(x), int(y))
                 radius = int(radius)
 
@@ -345,8 +348,23 @@ if __name__ == "__main__":
             amountOfMovementRequired = findEvasionPoint(boundries, numberOfPassesPerRegion, robotCurrentPosition)
             pathFinded = True
 
-            predictedLineUIPoint1 = [100, 100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], 100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
-            predictedLineUIPoint2 = [-100, -100 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], -100 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+            #Calculating path in UI
+            if (abs(coefficientsOfLine3D[0][0]) < 1 and abs(coefficientsOfLine3D[1][0]) < 1):
+                predictedLineUIPoint1 = [1000, 1000 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], 1000 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+                predictedLineUIPoint2 = [-1000, -1000 * coefficientsOfLine3D[0][0] + coefficientsOfLine3D[0][1], -1000 * coefficientsOfLine3D[1][0] + coefficientsOfLine3D[1][1]]
+
+            elif (abs(coefficientsOfLine3D[0][0]) >= abs(coefficientsOfLine3D[1][0])):
+                predictedLineUIPoint1 = [(1000 - coefficientsOfLine3D[0][1]) / coefficientsOfLine3D[0][0], 1000, coefficientsOfLine3D[1][0] / coefficientsOfLine3D[0][0] * (1000 - coefficientsOfLine3D[0][1]) + coefficientsOfLine3D[1][1]]
+                predictedLineUIPoint2 = [(-1000 - coefficientsOfLine3D[0][1]) / coefficientsOfLine3D[0][0], -1000, coefficientsOfLine3D[1][0] / coefficientsOfLine3D[0][0] * (-1000 - coefficientsOfLine3D[0][1]) + coefficientsOfLine3D[1][1]]
+            else:
+                predictedLineUIPoint1 = [(-1000 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-1000 - coefficientsOfLine3D[1][1]) * coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0] + coefficientsOfLine3D[0][1], -1000]
+                predictedLineUIPoint2 = [(-1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-1 - coefficientsOfLine3D[1][1]) * coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0] + coefficientsOfLine3D[0][1], -1]
+
+            if (predictedLineUIPoint1[2] > 0):
+                predictedLineUIPoint1 = [(-1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-1 - coefficientsOfLine3D[1][1]) * coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0] + coefficientsOfLine3D[0][1], -1]
+            elif (predictedLineUIPoint2[2] > 0):
+                predictedLineUIPoint2 = [(-1 - coefficientsOfLine3D[1][1]) / coefficientsOfLine3D[1][0], (-1 - coefficientsOfLine3D[1][1]) * coefficientsOfLine3D[0][0] / coefficientsOfLine3D[1][0] + coefficientsOfLine3D[0][1], -1]
+
             predictedLineUIPoint1[0] /= -predictedLineUIPoint1[2]
             predictedLineUIPoint1[1] /= -predictedLineUIPoint1[2]
             predictedLineUIPoint1[2] = -1
@@ -401,6 +419,13 @@ if __name__ == "__main__":
 
             print(f"Boundries: {boundries} Minumum amount of movement: {minAmountMovement} decision: {amountOfMovementRequired}")
             print(locations)
+
+        elif pathFinded == True:
+            cv2.line(frame, \
+                     (int(predictedLineUIPoint1[0]), int(predictedLineUIPoint1[1])), \
+                     (int(predictedLineUIPoint2[0]), int(predictedLineUIPoint2[1])), \
+                     color=(0, 0, 0), \
+                        thickness=5)
 
         cv2.imshow("Camera", frame)
         if cv2.waitKey(1) == ord('q'):
