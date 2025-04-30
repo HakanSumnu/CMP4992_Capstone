@@ -24,7 +24,7 @@ RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 178 * 178) / (19
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
-DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 0.0 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
+DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 27.5 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
                                                  # some point whose z component is negative. Therefore, every point in the coordinate system should be shifted this amount in Z axis 
                                                  # to locate robot's initial point to origin (0, 0).
 ROBOT_RADIUS: float = 3.5 * 1.2
@@ -97,10 +97,10 @@ def detectBall(frame):
     #v = cv2.equalizeHist(v)
     hsv = cv2.merge((h, s, v))
 
-    lowerGreen = np.array([45, 56, 25])
-    upperGreen = np.array([75, 199, 255])
-    #lowerGreen = np.array([31, 36, 25])
+    #lowerGreen = np.array([45, 56, 25])
     #upperGreen = np.array([79, 190, 255])
+    lowerGreen = np.array([35, 56, 25])
+    upperGreen = np.array([75, 199, 255])
     mask = cv2.inRange(hsv, lowerGreen, upperGreen)
 
     kernel = np.ones((5, 5), np.uint8)
@@ -117,7 +117,7 @@ def detectBall(frame):
 
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area > 200:
+        if area >= 400:
             ((x, y), radius) = cv2.minEnclosingCircle(contour)
             circle_area = np.pi * radius ** 2
             circularity = area / circle_area if circle_area > 0 else 0
