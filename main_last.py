@@ -21,19 +21,21 @@ RATIO_OF_HEIGHT_AND_PERPENDICULAR_DISTANCE = 0.966244 * (9 / 16) #For Hakan's we
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = math.pi * 106 * 106 / (960 * 540) #In photo taken from 30cm distance and with Hakan's phone.
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 78 * 78) / (640 * 480) #In photo taken from 50cm distance with Hakan's computer cam.
 #RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 230 * 230) / (3420 * 2214) #In photo taken from 50cm distance with Zeynep's computer cam.
-RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 178 * 178) / (1920 * 1080) #In photo taken from 50cm distance with Hakan's web cam.
+RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 172 * 172) / (1920 * 1080) #In photo taken from 50cm distance with Hakan's web cam.
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
 DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 27.5 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
                                                  # some point whose z component is negative. Therefore, every point in the coordinate system should be shifted this amount in Z axis 
                                                  # to locate robot's initial point to origin (0, 0).
+#DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 42.5
 ROBOT_RADIUS: float = 8.15 * 1.2
+#ROBOT_RADIUS: float = 10.0 * 1.2
 BALL_RADIUS: float = 4.2 * 1.2
 directionVector: np.ndarray = np.array([0.0, 0.0, -1.0]) # Before I change my mathematical formulation, this vector's z componet had to be -1. Now, it does not matter whether it is -1 or 1. 
                                        # The only thing that matter is that this vector should be a unit vector and all of its components must be zero except it z component.
-LEFT_BOUNDARY = -90.0 #In cm
-RIGHT_BOUNDARY = 90.0 #In cm
+LEFT_BOUNDARY = -60.0 #In cm
+RIGHT_BOUNDARY = 60.0 #In cm
 NUMBER_OF_REGIONS = 5
 WEIGHT_FOR_PASSES = 0
 
@@ -62,6 +64,15 @@ def imageAngles(pixelX, pixelY, imageWidth, imageHeight, diagonalAngle = 58.0):
     verticalAngle = math.atan(pixelY / perpendicularDistanceToScenePX)
     return horizontalAngle, verticalAngle
 
+#def imageAngles(pixelX, pixelY, imageWidth, imageHeight, diagonalAngle = 58.0):
+#    pixelX = pixelX - imageWidth / 2
+#    pixelY = pixelY - imageHeight / 2
+#    pixelHipotenus = math.sqrt(imageWidth * imageWidth + imageHeight * imageHeight)
+#    ratio = math.tan(math.radians(diagonalAngle / 2.0)) / (pixelHipotenus / 2.0)
+#    horizontalAngle = math.atan(ratio * pixelX)
+#    verticalAngle = math.atan(ratio * pixelY)
+#    return horizontalAngle, verticalAngle
+
 def clamp(number, min, max):
     return (number < min) * min + (number > max) * max + (number >= min and number <= max) * number
 
@@ -80,33 +91,59 @@ def findIQR(array):
     return IQR, q1, q3
 
 def detectBall(frame):
-    global GLOBAL_X_MOMENTUM, GLOBAL_Y_MOMENTUM, GLOBAL_Z_MOMENTUM, GLOBAL_MOMENTUM_POWER, GLOBAL_STEP
+    global GLOBAL_X_MOMENTUM, GLOBAL_Y_MOMENTUM, GLOBAL_Z_MOMENTUM, GLOBAL_MOMENTUM_POWER, GLOBAL_STEP, whiteBalancer
 
-    blurredFrame = frame + 0
-    #blurredFrame = cv2.GaussianBlur(frame, (25,25), 0)
+    #blurredFrame = frame + 0
+    blurredFrame = cv2.GaussianBlur(frame, (7,7), 0)
     hsv = cv2.cvtColor(blurredFrame, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+    v = v / 255.0
+    minValue = np.percentile(v, 1)
+    maxValue = np.percentile(v, 99)
+    v = np.clip(((v - minValue) / (maxValue - minValue + 1e-7)) * 255.0, 0.0, 255.0).astype(np.uint8)
+    hsv = cv2.merge((h, s, v))
 
-    #lowerGreen = np.array([45, 56, 25])
-    #upperGreen = np.array([79, 190, 255])
-    #lowerGreen = np.array([35, 56, 40])
-    #upperGreen = np.array([75, 199, 255])
-    mask = cv2.inRange(hsv, np.array([35, 56, 25]), np.array([65, 210, 255]))
-    #mask2 = cv2.inRange(hsv, np.array([45, 56, 25]), np.array([79, 199, 255]))
+    mask = cv2.inRange(hsv, np.array([22, 80, 40]), np.array([46, 230, 255]))
+    mask2 = cv2.inRange(hsv, np.array([34, 80, 40]), np.array([58, 230, 255]))
+    mask3 = cv2.inRange(hsv, np.array([46, 80, 40]), np.array([70, 230, 255]))
 
-    #kernel = np.ones((5, 5), np.uint8)
+    #kernel = np.ones((3, 3), np.uint8)
     #mask = cv2.erode(mask, kernel, iterations=3)
     #mask = cv2.dilate(mask, kernel, iterations=3)
 
     cv2.imshow("Mask", mask)
-    #cv2.imshow("Mask2", mask2)
+    cv2.imshow("Mask2", mask2)
+    cv2.imshow("Mask3", mask3)
 
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours1, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours3, _ = cv2.findContours(mask3, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     ballPosition = None
     locationVector = None
 
     validContours = []
 
-    for contour in contours:
+    for contour in contours1:
+        area = cv2.contourArea(contour)
+        if area >= 400:
+            ((x, y), radius) = cv2.minEnclosingCircle(contour)
+            circle_area = np.pi * radius ** 2
+            circularity = area / circle_area if circle_area > 0 else 0
+
+            if circularity >= 0.7:
+                validContours.append(contour)
+
+    for contour in contours2:
+        area = cv2.contourArea(contour)
+        if area >= 400:
+            ((x, y), radius) = cv2.minEnclosingCircle(contour)
+            circle_area = np.pi * radius ** 2
+            circularity = area / circle_area if circle_area > 0 else 0
+
+            if circularity >= 0.7:
+                validContours.append(contour)
+
+    for contour in contours3:
         area = cv2.contourArea(contour)
         if area >= 400:
             ((x, y), radius) = cv2.minEnclosingCircle(contour)
