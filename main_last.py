@@ -25,7 +25,7 @@ RATIO_OF_AREA_OF_BALL_AT_PHOTO_AT_CERTAIN_DISTANCE = (math.pi * 172 * 172) / (19
 #CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 30.0
 CERTAIN_DISTANCE_BETWEEN_BALL_AND_PHOTO = 50.0
 
-DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 27.5 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
+DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 37.5 # In cm. It should be added to line equation since we use right hand-side coordinate system, which causes robot's initisl point to stay at
                                                  # some point whose z component is negative. Therefore, every point in the coordinate system should be shifted this amount in Z axis 
                                                  # to locate robot's initial point to origin (0, 0).
 #DISTANCE_BETWEEN_ROBOT_INITIAL_AND_CAMERA: float = 42.5
@@ -91,7 +91,7 @@ def findIQR(array):
     return IQR, q1, q3
 
 def detectBall(frame):
-    global GLOBAL_X_MOMENTUM, GLOBAL_Y_MOMENTUM, GLOBAL_Z_MOMENTUM, GLOBAL_MOMENTUM_POWER, GLOBAL_STEP, whiteBalancer
+    global GLOBAL_X_MOMENTUM, GLOBAL_Y_MOMENTUM, GLOBAL_Z_MOMENTUM, GLOBAL_MOMENTUM_POWER, GLOBAL_STEP
 
     #blurredFrame = frame + 0
     blurredFrame = cv2.GaussianBlur(frame, (7,7), 0)
@@ -103,9 +103,9 @@ def detectBall(frame):
     v = np.clip(((v - minValue) / (maxValue - minValue + 1e-7)) * 255.0, 0.0, 255.0).astype(np.uint8)
     hsv = cv2.merge((h, s, v))
 
-    mask = cv2.inRange(hsv, np.array([22, 80, 40]), np.array([46, 230, 255]))
-    mask2 = cv2.inRange(hsv, np.array([34, 80, 40]), np.array([58, 230, 255]))
-    mask3 = cv2.inRange(hsv, np.array([46, 80, 40]), np.array([70, 230, 255]))
+    mask = cv2.inRange(hsv, np.array([22, 80, 25]), np.array([52, 255, 255]))
+    mask2 = cv2.inRange(hsv, np.array([37, 80, 25]), np.array([67, 255, 255]))
+    mask3 = cv2.inRange(hsv, np.array([52, 80, 25]), np.array([82, 255, 255]))
 
     #kernel = np.ones((3, 3), np.uint8)
     #mask = cv2.erode(mask, kernel, iterations=3)
@@ -270,9 +270,9 @@ def findEvasionPoint(points, numberOfPassesPerRegion, robotCurrentPosition):
         for i in range(NUMBER_OF_REGIONS):
             regionLeft = LEFT_BOUNDARY + i * (RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS
             regionRight = regionLeft + (RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS
-            if leftPoint <= regionLeft * ROBOT_RADIUS and rightPoint >= regionRight * ROBOT_RADIUS:
+            if leftPoint <= regionLeft + ROBOT_RADIUS and rightPoint >= regionRight - ROBOT_RADIUS:
                 continue
-            elif leftPoint >= regionLeft + ROBOT_RADIUS and leftPoint <= regionRight * ROBOT_RADIUS and rightPoint > regionRight - ROBOT_RADIUS:
+            elif leftPoint >= regionLeft + ROBOT_RADIUS and leftPoint <= regionRight - ROBOT_RADIUS and rightPoint > regionRight - ROBOT_RADIUS:
                 if minRegionCost >= numberOfPassesPerRegion[i]:
                     if distanceToMinCostRegion > abs(leftPoint - robotCurrentPosition) or minRegionCost > numberOfPassesPerRegion[i]:
                         distanceToMinCostRegion = abs(leftPoint - robotCurrentPosition)
@@ -355,9 +355,22 @@ if __name__ == "__main__":
     pathFinded: bool = False
     prevLocation = None
     firstLocation = True
+    isLCDConnected = False
+    isRobotConnected = False
 
-    #ser = serial.Serial('COM5', 9600)  # Portu Arduino'ya göre ayarlayın
-    #time.sleep(2)  # Bağlantı için bekle
+    try:
+        lcdSer = serial.Serial('COM5', 9600)  # Port of Arduino with LCD screen
+        time.sleep(2)  # Wait for the connection
+        isLCDConnected = True
+    except serial.serialutil.SerialException:
+        isLCDConnected = False
+
+    try:
+        robotSer = serial.Serial('COM3', 9600)  # Port of robot
+        time.sleep(2)  # Wait for the connection
+        isRobotConnected = True
+    except serial.serialutil.SerialException:
+        isRobotConnected = False
 
     #camera = cv2.VideoCapture(0)
     camera = cv2.VideoCapture(1, cv2.CAP_DSHOW) #For Hakan's web cam
@@ -448,7 +461,6 @@ if __name__ == "__main__":
 
         if len(locations) >= 5 and pathFinded == False:
             coefficientsOfLine3D, coefficientsOfLine2D, boundries = findPath(locations=locations, momentum=0.0)
-            numberOfPassesPerRegion[clamp(int((-coefficientsOfLine2D[1] / coefficientsOfLine2D[0] - LEFT_BOUNDARY) / ((RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS)),0 , NUMBER_OF_REGIONS - 1)] += 1
             
             numberOfTimesBallGetsFurther = 0
             for i in range(len(locations) - 1):
@@ -456,11 +468,32 @@ if __name__ == "__main__":
                     numberOfTimesBallGetsFurther += 1
             
             if numberOfTimesBallGetsFurther - len(locations) * 0.6 > -0.001:
-                amountOfMovementRequired = 0.0
+                current_path.clear()
+                trajectory_pixels.clear()
+                locations.clear()
+                pathFinded = False
+                prevLocation = None
+                firstLocation = True
+                GLOBAL_STEP = 0
+                GLOBAL_X_MOMENTUM = 0
+                GLOBAL_Y_MOMENTUM = 0
+                GLOBAL_Z_MOMENTUM = 0
+                cv2.imshow("Camera", frame)
+                if cv2.waitKey(1) == ord('q'):
+                    break
+                start = time.time()
+                continue
             else:
                 amountOfMovementRequired = findEvasionPoint(boundries, numberOfPassesPerRegion, robotCurrentPosition)
+
+            numberOfPassesPerRegion[clamp(int((-coefficientsOfLine2D[1] / coefficientsOfLine2D[0] - LEFT_BOUNDARY) / ((RIGHT_BOUNDARY - LEFT_BOUNDARY) / NUMBER_OF_REGIONS)),0 , NUMBER_OF_REGIONS - 1)] += 1
             pathFinded = True
-            #sendEvasionPointToArduino(ser, amountOfMovementRequired)
+
+            if isLCDConnected == True:
+                sendEvasionPointToArduino(lcdSer, amountOfMovementRequired)
+
+            if isRobotConnected == True:
+                sendEvasionPointToArduino(robotSer, amountOfMovementRequired)
 
             #Calculating path in UI
             if (abs(coefficientsOfLine3D[0][0]) < 1 and abs(coefficientsOfLine3D[1][0]) < 1):
@@ -554,4 +587,8 @@ if __name__ == "__main__":
     camera.release()
     root.destroy()
     cv2.destroyAllWindows()
-    #ser.close()
+
+    if isLCDConnected == True:
+        lcdSer.close()
+    if isRobotConnected == True:
+        robotSer.close()
